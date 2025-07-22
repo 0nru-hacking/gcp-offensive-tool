@@ -1,6 +1,8 @@
 # gcp-offensive-tool
 
-This tool was developed as part of a Master's Thesis in Cybersecurity. It automates the creation of vulnerable configurations and the execution of real-world abuse techniques in Google Cloud Platform (GCP), allowing controlled testing of privilege escalation, persistence, and post-exploitation scenarios.
+This repository contains a modular tool developed as part of a Master's Thesis in Cybersecurity. It enables the creation and exploitation of vulnerable configurations in Google Cloud Platform (GCP), simulating realistic post-compromise scenarios such as privilege escalation, identity abuse, and persistence.
+
+---
 
 ## 🔍 Purpose
 
@@ -10,6 +12,8 @@ The tool simulates realistic offensive security scenarios in GCP by:
 - Generating impersonation tokens (OIDC) for identity abuse
 - Invoking private endpoints with replayed tokens
 - Testing persistence and privilege escalation chains
+
+---
 
 ## 📁 Structure
 
@@ -25,6 +29,7 @@ gcp-offensive-tool/
 ├── README.md
 └── LICENSE
 
+---
 
 ## 🚀 Example Usage
 
@@ -52,6 +57,8 @@ python3 abuse_cloud_tasks_token_privesc/trigger_run.py
 python3 abuse_cloud_tasks_token_privesc/cleanup.py
 ```
 
+---
+
 ## ⚙️ Requirements
 
 - Python 3.8+
@@ -60,15 +67,37 @@ python3 abuse_cloud_tasks_token_privesc/cleanup.py
 
 - GCP project with Cloud Tasks and Cloud Run APIs enabled
 
-## 📘 Related Work
+---
 
-This tool was inspired by:
+## Instalation
 
-    Offensive research on GCP privilege escalation
+Clone and install dependencies:
 
-    Manual enumeration of identity bindings
+```bash
+git clone https://github.com/onru-hacking/gcp-offensive-tool.git
+cd gcp-offensive-tool
+pip install -r requirements.txt
+```
 
-    PurplePanda and BloodHound-style visualizations (WIP)
+---
+
+## 🎥 Demo
+
+Coming soon! A short video will demonstrate a full abuse chain using Cloud Tasks, OIDC impersonation, and private Cloud Run endpoint invocation.
+
+---
+
+🧠 Thesis Context
+
+This tool is part of a research thesis focused on offensive cloud security in Google Cloud Platform. It automates complex abuse chains typically executed manually, and facilitates:
+
+    Controlled security research
+
+    Defensive validation and alerting tests
+
+    Enumeration of misconfigured privileges and identities
+
+---
 
 ⚠️ Disclaimer
 
