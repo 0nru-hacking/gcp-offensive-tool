@@ -8,6 +8,14 @@ This repository contains a modular tool developed as part of a Master's Thesis i
 
 ---
 
+## 🎥 Demo
+
+<p align="center">
+  <img src="tool.gif" alt="gcp-offensive-tool">
+</p>
+
+---
+
 ## 🔍 Purpose
 
 The tool simulates realistic offensive security scenarios in GCP by:
@@ -105,12 +113,6 @@ git clone https://github.com/onru-hacking/gcp-offensive-tool.git
 cd gcp-offensive-tool
 pip install -r requirements.txt
 ```
-
----
-
-## 🎥 Demo
-
-Coming soon! A short video will demonstrate a full abuse chain using Cloud Tasks, OIDC impersonation, and private Cloud Run endpoint invocation.
 
 ---
 
