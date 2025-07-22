@@ -1,6 +1,7 @@
 <p align="center">
   <img src="banner.png" alt="gcp-offensive-tool" width="100%">
 </p>
+
 ---
 
 This repository contains a modular tool developed as part of a Master's Thesis in Cybersecurity. It enables the creation and exploitation of vulnerable configurations in Google Cloud Platform (GCP), simulating realistic post-compromise scenarios such as privilege escalation, identity abuse, and persistence.
