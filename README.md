@@ -17,17 +17,26 @@ The tool simulates realistic offensive security scenarios in GCP by:
 
 ## 📁 Structure
 
-gcp-offensive-tool/
-├── core/
-│   └── auth_utils.py                   # Common functions (e.g., token creation)
-├── abuse_cloud_tasks_token_privesc/
-│   ├── create_vuln_env.py             # Deploys the vulnerable setup
-│   ├── exploit_token.py               # Extracts and prints OIDC token
-│   ├── trigger_run.py                 # Sends token to target endpoint
-│   └── cleanup.py                     # Destroys the environment
-├── requirements.txt
-├── README.md
-└── LICENSE
+The tool is organized into modular components:
+
+- **`core/`**  
+  Contains reusable utility functions such as OIDC token generation and authentication helpers.
+
+- **`modules/`**  
+  Reserved for offensive modules (Cloud Tasks and Firestore abuse, Spanner persistence). Currently under development.
+
+- **`cloudrun_api/`**  
+  Includes a simple Dockerized Cloud Run backend to receive replayed tokens (for exploitation demonstration).
+
+- **`run_attack.py`**  
+  Master entrypoint. Coordinates abuse modules and simulates complete attack chains.
+
+- **`requirements.txt`**  
+  List of Python dependencies.
+
+- **`README.md`**, **`LICENSE`**, **`.gitignore`**  
+  Project documentation and licensing information.
+
 
 ---
 
