@@ -46,28 +46,42 @@ The tool is organized into modular components:
 
 ## 🚀 Example Usage
 
-### 1. Deploy a vulnerable Cloud Task with OIDC impersonation
+### 1. Run the full attack chain from the main entrypoint
 
 ```bash
-python3 abuse_cloud_tasks_token_privesc/create_vuln_env.py
+PYTHONPATH=. python3 run_attack.py
 ```
 
-2. Extract and display OIDC token for the overprivileged service account
+This will:
+
+- Deploy a vulnerable Cloud Task impersonating a high-privileged service account
+
+- Extract a valid OIDC token
+
+- Replay the token to invoke a private Cloud Run endpoint
+
+- Clean up all created resources
+
+---
+
+🛠️ Optional: Run each step manually (for educational purposes)
+
+You can also run individual steps to better understand the attack chain:
 
 ```bash
-python3 abuse_cloud_tasks_token_prives/exploit_token.py
+python3 modules/abuse_cloud_tasks/1_create_vulnerable_env.py
 ```
 
-3. Use the token to invoke a private Cloud Run endpoint
-
 ```bash
-python3 abuse_cloud_tasks_token_privesc/trigger_run.py
+python3 modules/abuse_cloud_tasks/2_execute_attack.py
 ```
 
-4. Clean up all created resources
+```bash
+python3 modules/abuse_cloud_tasks/3_trigger_damage.py
+```
 
 ```bash
-python3 abuse_cloud_tasks_token_privesc/cleanup.py
+python3 modules/abuse_cloud_tasks/4_cleanup.py
 ```
 
 ---
