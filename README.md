@@ -10,9 +10,7 @@ This repository contains a modular tool developed as part of a Master's Thesis i
 
 ## 🎥 Demo
 
-<p align="center">
-  <img src="tool.gif" alt="gcp-offensive-tool">
-</p>
+[▶️ Watch the demo video](tool_codificado.mp4)
 
 ---
 
