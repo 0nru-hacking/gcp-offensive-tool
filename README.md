@@ -107,7 +107,7 @@ pip install -r requirements.txt
 
 If the install of requirements fails:
 
-### 0. Create and activate a virtual environment (recommended)
+### Create and activate a virtual environment (recommended)
 
 ```bash
 # Create environment
