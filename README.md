@@ -105,9 +105,7 @@ cd gcp-offensive-tool
 pip install -r requirements.txt
 ```
 
----
-
-## 🚀 Example Usage
+If the install of requirements fails:
 
 ### 0. Create and activate a virtual environment (recommended)
 
@@ -124,6 +122,10 @@ venv\Scripts\Activate.ps1
 # Install dependencies
 pip install -r requirements.txt
 ```
+
+---
+
+## 🚀 Example Usage
 
 ### Abuse 1 – Cloud Tasks Privileged Execution
 
