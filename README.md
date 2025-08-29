@@ -23,6 +23,16 @@ The tool simulates **realistic offensive scenarios in GCP** by:
 
 ---
 
+## ⚠️ Important Notice (Costs & Security)
+
+- Some resources incur costs (e.g., Cloud Composer, Cloud Run, network egress, invocations). Always use a disposable project and configure budget alerts.
+  
+- Run the tool only in projects you own and with proper authorization. It is intended for educational/research purposes in isolated environments.
+
+- Many scripts assume `PROJECT_ID=poc-tfm-tests`. If you use a different project, update it in `run_attack.py` and/or within the `modules/` scripts.
+
+---
+
 ## 📁 Structure
 
 The tool is organized into modular components:
@@ -125,6 +135,19 @@ pip install -r requirements.txt
 
 ---
 
+## 🌐 ngrok Configuration
+
+1. Install ngrok and log in with your authtoken:
+
+```bash
+ngrok config add-authtoken <YOUR_AUTHTOKEN>
+```
+
+2. The tool will automatically start a listener when the PoC requires it.
+
+
+---
+
 ## 🚀 Example Usage
 
 ### Abuse 1 – Cloud Tasks Privileged Execution
@@ -166,7 +189,6 @@ python3 run_attack.py --abuse composer_external_payload
 ```bash
 python3 run_attack.py --module composer_external_payload --use-existing <Name of the composer environment>
 ```
-
 
 
 
