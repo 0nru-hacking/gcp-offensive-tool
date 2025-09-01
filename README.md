@@ -126,9 +126,6 @@ python3 -m venv venv
 # Activate environment (Linux/MacOS)
 source venv/bin/activate
 
-# Activate environment (Windows PowerShell)
-venv\Scripts\Activate.ps1
-
 # Install dependencies
 pip install -r requirements.txt
 ```
