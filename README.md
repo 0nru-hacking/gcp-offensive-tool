@@ -130,6 +130,35 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## 🔧 Installing Google Cloud SDK (Linux)
+
+The tool requires the Google Cloud SDK (`gcloud`) to perform authentication (`gcloud auth login`).  
+Follow these steps to install it on Debian/Ubuntu/Kali:
+
+```bash
+# 1) Create the keyring and import the Google signing key
+sudo mkdir -p /usr/share/keyrings
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+  | sudo gpg --dearmor -o /usr/share/keyrings/google-cloud-sdk-archive-keyring.gpg
+```
+
+```bash
+# 2) Add the Google Cloud SDK repository
+echo "deb [signed-by=/usr/share/keyrings/google-cloud-sdk-archive-keyring.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
+  | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
+```
+
+```bash
+# 3) Update package lists and install the SDK
+sudo apt-get update
+sudo apt-get install -y google-cloud-sdk
+```
+
+```bash
+# 4) Verify installation
+gcloud --version
+```
+
 ## 🔑 Google Cloud Authentication
 
 Before running the tool, authenticate with your Google Cloud account using the CLI:
