@@ -133,6 +133,17 @@ venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
+## 🔑 Google Cloud Authentication
+
+Before running the tool, authenticate with your Google Cloud account using the CLI:
+
+```bash
+gcloud auth login
+gcloud config set project <YOUR_PROJECT_ID>
+```
+
+Make sure the selected project has billing enabled and the required APIs activated (the tool will notify you if any are missing).
+
 ---
 
 ## 🌐 ngrok Configuration
