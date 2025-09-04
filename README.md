@@ -185,6 +185,36 @@ ngrok config add-authtoken <YOUR_AUTHTOKEN>
 
 ---
 
+## 🔑 Prerequisite: Service Account Setup
+
+Before running any abuse module, you must create a privileged Service Account (Owner role) and download its authentication key. This account is required by the tool to authenticate against GCP APIs.
+
+1. **Create the Service Account (with Owner role):**
+
+```bash
+gcloud iam service-accounts create internal-support \
+    --description="Privileged SA for TFM offensive tool" \
+    --display-name="Internal Support SA"
+
+```
+
+2. Bind Owner role to the Service Account:
+
+```bash
+gcloud projects add-iam-policy-binding PROJECT_ID \
+    --member="serviceAccount:internal-support@PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/owner"
+```
+
+3. Generate and download the JSON key:
+
+```bash
+gcloud iam service-accounts keys create internal-support-key.json \
+    --iam-account=internal-support@PROJECT_ID.iam.gserviceaccount.com
+```
+
+---
+
 ## 🚀 Example Usage
 
 ### Abuse 1 – Cloud Tasks Privileged Execution
